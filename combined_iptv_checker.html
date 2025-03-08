@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Stream Checker</title>
+    <style>
+    :root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --bg-color: #f4f7f9;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--dark-color);
+    line-height: 1.6;
+}
+
+header {
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    color: white;
+    text-align: center;
+    padding: 1.5rem 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 992px) {
+    .container {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .player-section {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+    }
+
+    .input-section {
+        grid-column: 2;
+    }
+
+    .results-section {
+        grid-column: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+    
+    .player-section {
+        grid-row: auto;
+    }
+    
+    .control-buttons button {
+        font-size: 0.85rem;
+        padding: 0.6rem;
+    }
+}
+
+/* Input Section */
+.input-section {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+textarea {
+    width: 100%;
+    height: 200px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    resize: vertical;
+    font-family: monospace;
+    margin-bottom: 1rem;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+button {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button:hover {
+    background-color: #0069d9;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button:disabled {
+    background-color: var(--secondary-color);
+    cursor: not-allowed;
+}
+
+/* Player Section */
+.player-section {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.player-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#playerWrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#videoPlayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#loadingIndicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+    visibility: hidden;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    animation: rotate 2s linear infinite;
+}
+
+.path {
+    stroke: var(--primary-color);
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+.player-info {
+    margin-top: 1rem;
+}
+
+.current-channel {
+    margin-bottom: 1rem;
+}
+
+.current-channel h3 {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.25rem;
+}
+
+.current-channel p {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.progress-info {
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    height: 8px;
+    background-color: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+#progressFill {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.control-buttons button {
+    flex: 1;
+}
+
+#startCheckBtn {
+    background-color: var(--success-color);
+}
+
+#startCheckBtn:hover {
+    background-color: #218838;
+}
+
+#stopCheckBtn {
+    background-color: var(--danger-color);
+}
+
+#stopCheckBtn:hover {
+    background-color: #c82333;
+}
+
+.settings {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--light-color);
+    border-radius: 4px;
+}
+
+.settings label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.settings input[type="number"] {
+    width: 60px;
+    padding: 0.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* Results Section */
+.results-section {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.results-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.search-filter {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+#statusFilter {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.results-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.channel-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.channel-item:last-child {
+    border-bottom: none;
+}
+
+.channel-item:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.channel-status {
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.channel-status svg {
+    width: 24px;
+    height: 24px;
+}
+
+.status-success .channel-status svg {
+    fill: var(--success-color);
+}
+
+.status-error .channel-status svg {
+    fill: var(--danger-color);
+}
+
+.channel-info {
+    flex: 1;
+}
+
+.channel-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.channel-url {
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    word-break: break-all;
+}
+
+.channel-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    padding: 0.25rem;
+    cursor: pointer;
+}
+
+.action-button:hover {
+    color: #0056b3;
+}
+
+.no-results {
+    text-align: center;
+    padding: 2rem;
+    color: var(--secondary-color);
+}
+
+footer {
+    text-align: center;
+    padding: 1.5rem 0;
+    background-color: var(--dark-color);
+    color: white;
+    margin-top: 2rem;
+}
+    </style>
+</head>
+<body>
+    <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Stream Checker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "shaka-player": "https://cdn.jsdelivr.net/npm/shaka-player@4.3.6/+esm"
+      }
+    }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>IPTV Stream Checker</h1>
+    </header>
+    
+    <main>
+        <div class="container">
+            <div class="input-section">
+                <h2>Input IPTV List</h2>
+                <textarea id="iptvList" placeholder="Paste your IPTV list here (m3u or m3u8 format)"></textarea>
+                <div class="buttons">
+                    <button id="loadListBtn">Load List</button>
+                    <button id="pasteFromClipboardBtn">Paste from Clipboard</button>
+                    <button id="uploadFileBtn">Upload File</button>
+                    <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display: none;">
+                </div>
+            </div>
+            
+            <div class="player-section">
+                <div class="player-container">
+                    <h2>Stream Preview</h2>
+                    <div id="playerWrapper">
+                        <video id="videoPlayer" controls></video>
+                        <div id="loadingIndicator">
+                            <svg viewBox="0 0 50 50" class="spinner">
+                                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="player-info">
+                        <div class="current-channel">
+                            <h3>Current Channel:</h3>
+                            <p id="currentChannelName">None</p>
+                        </div>
+                        <div class="progress-info">
+                            <p>Checking: <span id="currentIndex">0</span>/<span id="totalChannels">0</span></p>
+                            <div class="progress-bar">
+                                <div id="progressFill"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-buttons">
+                        <button id="startCheckBtn" disabled>Start Checking</button>
+                        <button id="stopCheckBtn" disabled>Stop</button>
+                        <button id="pauseResumeBtn" disabled>Pause</button>
+                    </div>
+                    <div class="settings">
+                        <label for="timeoutInput">Timeout (seconds):</label>
+                        <input type="number" id="timeoutInput" value="10" min="3" max="30">
+                        <label for="autoplayToggle">
+                            <input type="checkbox" id="autoplayToggle" checked>
+                            Autoplay Next
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h2>Results</h2>
+                <div class="results-header">
+                    <div class="search-filter">
+                        <input type="text" id="searchInput" placeholder="Search channels...">
+                        <select id="statusFilter">
+                            <option value="all">All Channels</option>
+                            <option value="working">Working Only</option>
+                            <option value="notWorking">Not Working Only</option>
+                        </select>
+                    </div>
+                    <div class="export-buttons">
+                        <button id="exportWorkingBtn">Export Working Channels</button>
+                        <button id="exportAllBtn">Export All Results</button>
+                    </div>
+                </div>
+                <div class="results-list" id="resultsList">
+                    <p class="no-results">No channels checked yet</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>IPTV Stream Checker | Professional Edition</p>
+    </footer>
+    
+    <script src="main.js" type="module"></script>
+</body>
+</html>
+    <script>
+    import shaka from 'shaka-player';
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
+    const iptvListTextarea = document.getElementById('iptvList');
+    const loadListBtn = document.getElementById('loadListBtn');
+    const pasteFromClipboardBtn = document.getElementById('pasteFromClipboardBtn');
+    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    const fileInput = document.getElementById('fileInput');
+    const startCheckBtn = document.getElementById('startCheckBtn');
+    const stopCheckBtn = document.getElementById('stopCheckBtn');
+    const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+    const videoPlayer = document.getElementById('videoPlayer');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const currentChannelName = document.getElementById('currentChannelName');
+    const currentIndexElem = document.getElementById('currentIndex');
+    const totalChannelsElem = document.getElementById('totalChannels');
+    const progressFill = document.getElementById('progressFill');
+    const resultsList = document.getElementById('resultsList');
+    const timeoutInput = document.getElementById('timeoutInput');
+    const autoplayToggle = document.getElementById('autoplayToggle');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const exportWorkingBtn = document.getElementById('exportWorkingBtn');
+    const exportAllBtn = document.getElementById('exportAllBtn');
+
+    // App state
+    let channels = [];
+    let currentIndex = -1;
+    let isChecking = false;
+    let isPaused = false;
+    let checkTimeout = null;
+    let startTime = 0;
+    let shakaInstance = null;
+    let results = [];
+
+    // Initialize Shaka Player
+    shaka.polyfill.installAll();
+
+    // Event Listeners
+    loadListBtn.addEventListener('click', loadIPTVList);
+    pasteFromClipboardBtn.addEventListener('click', pasteFromClipboard);
+    uploadFileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileUpload);
+    startCheckBtn.addEventListener('click', startChecking);
+    stopCheckBtn.addEventListener('click', stopChecking);
+    pauseResumeBtn.addEventListener('click', togglePauseResume);
+    videoPlayer.addEventListener('error', handlePlayerError);
+    videoPlayer.addEventListener('playing', handlePlayerPlaying);
+    searchInput.addEventListener('input', filterResults);
+    statusFilter.addEventListener('change', filterResults);
+    exportWorkingBtn.addEventListener('click', exportWorkingChannels);
+    exportAllBtn.addEventListener('click', exportAllResults);
+
+    // Helper functions
+    function loadIPTVList() {
+        const content = iptvListTextarea.value.trim();
+        if (!content) {
+            showAlert('Please enter an IPTV list');
+            return;
+        }
+
+        try {
+            channels = parseM3U(content);
+            updateChannelCount();
+            startCheckBtn.disabled = false;
+            showAlert(`Loaded ${channels.length} channels successfully!`, 'success');
+        } catch (error) {
+            showAlert(`Error parsing IPTV list: ${error.message}`);
+        }
+    }
+
+    async function pasteFromClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            iptvListTextarea.value = text;
+            loadIPTVList();
+        } catch (error) {
+            showAlert('Failed to read from clipboard. Please paste manually.');
+        }
+    }
+
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                iptvListTextarea.value = e.target.result;
+                loadIPTVList();
+            } catch (error) {
+                showAlert('Error reading file content');
+            }
+        };
+        reader.onerror = function() {
+            showAlert('Error reading file. Please try another file.');
+        };
+        reader.readAsText(file);
+    }
+
+    function parseM3U(content) {
+        const parsedChannels = [];
+        const lines = content.split(/\r?\n/); 
+        
+        let currentChannel = null;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            if (!line) continue; // Skip empty lines
+            
+            if (line.startsWith('#EXTINF:')) {
+                // Extract channel name from EXTINF line
+                const nameMatch = line.match(/,(.*)$/);
+                const name = nameMatch && nameMatch[1] 
+                    ? nameMatch[1].trim() 
+                    : `Channel ${parsedChannels.length + 1}`;
+                
+                currentChannel = { 
+                    name: name,
+                    url: null 
+                };
+            } 
+            // If line is not a comment and starts with http, it's a URL
+            else if (!line.startsWith('#') && 
+                    (line.startsWith('http://') || line.startsWith('https://') || 
+                     line.startsWith('rtmp://') || line.startsWith('rtsp://'))) {
+                
+                // If we have a channel waiting for URL, use it
+                if (currentChannel) {
+                    currentChannel.url = line;
+                    parsedChannels.push(currentChannel);
+                    currentChannel = null;
+                } else {
+                    // Otherwise create a new channel with a generic name
+                    parsedChannels.push({
+                        name: `Channel ${parsedChannels.length + 1}`,
+                        url: line
+                    });
+                }
+            }
+        }
+
+        // Simple URL list fallback
+        if (parsedChannels.length === 0) {
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line && (line.startsWith('http://') || line.startsWith('https://'))) {
+                    parsedChannels.push({
+                        name: `Channel ${i + 1}`,
+                        url: line
+                    });
+                }
+            }
+        }
+
+        // Second fallback - try to extract URLs with regex
+        if (parsedChannels.length === 0) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const matches = content.match(urlRegex);
+            
+            if (matches && matches.length > 0) {
+                matches.forEach((url, index) => {
+                    parsedChannels.push({
+                        name: `Channel ${index + 1}`,
+                        url: url
+                    });
+                });
+            }
+        }
+
+        if (parsedChannels.length === 0) {
+            throw new Error('No valid channels found in the input');
+        }
+
+        return parsedChannels;
+    }
+
+    function updateChannelCount() {
+        totalChannelsElem.textContent = channels.length;
+        currentIndexElem.textContent = currentIndex + 1;
+        
+        if (channels.length > 0) {
+            const progress = ((currentIndex + 1) / channels.length) * 100;
+            progressFill.style.width = `${progress}%`;
+        } else {
+            progressFill.style.width = '0%';
+        }
+    }
+
+    function startChecking() {
+        if (channels.length === 0) {
+            showAlert('No channels loaded. Please load an IPTV list first.');
+            return;
+        }
+
+        if (!isChecking) {
+            isChecking = true;
+            isPaused = false;
+            currentIndex = -1;
+            results = [];
+            
+            resultsList.innerHTML = '';
+            startCheckBtn.disabled = true;
+            stopCheckBtn.disabled = false;
+            pauseResumeBtn.disabled = false;
+            pauseResumeBtn.textContent = 'Pause';
+            
+            checkNextChannel();
+        }
+    }
+
+    function stopChecking() {
+        clearTimeout(checkTimeout);
+        isChecking = false;
+        startCheckBtn.disabled = false;
+        stopCheckBtn.disabled = true;
+        pauseResumeBtn.disabled = true;
+        hideLoadingIndicator();
+        resetPlayer();
+        currentIndexElem.textContent = '0';
+        currentChannelName.textContent = 'None';
+    }
+
+    function togglePauseResume() {
+        if (isChecking) {
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                pauseResumeBtn.textContent = 'Resume';
+                clearTimeout(checkTimeout);
+                hideLoadingIndicator();
+            } else {
+                pauseResumeBtn.textContent = 'Pause';
+                checkNextChannel();
+            }
+        }
+    }
+
+    function checkNextChannel() {
+        if (!isChecking || isPaused) return;
+        
+        currentIndex++;
+        updateChannelCount();
+        
+        if (currentIndex >= channels.length) {
+            showAlert('Check completed!', 'success');
+            stopChecking();
+            return;
+        }
+        
+        const channel = channels[currentIndex];
+        currentChannelName.textContent = channel.name;
+        
+        resetPlayer();
+        showLoadingIndicator();
+        startTime = Date.now();
+        
+        const timeoutDuration = timeoutInput.value * 1000 || 10000;
+        checkTimeout = setTimeout(() => {
+            handlePlayerError({ type: 'timeout' });
+        }, timeoutDuration);
+        
+        playChannel(channel);
+    }
+
+    function playChannel(channel) {
+        const url = channel.url;
+        videoPlayer.src = '';
+        
+        try {
+            playShakaStream(url);
+        } catch (error) {
+            handlePlayerError({ type: 'error', details: error.message });
+        }
+    }
+
+    function playShakaStream(url) {
+        resetPlayer();
+        shakaInstance = new shaka.Player(videoPlayer);
+        
+        shakaInstance.addEventListener('error', (event) => {
+            console.error('Shaka Error:', event.detail);
+            handlePlayerError({ type: 'shaka', details: event.detail });
+        });
+        
+        shakaInstance.load(url).then(() => {
+            videoPlayer.play().catch(err => {
+                console.error('Error starting Shaka playback:', err);
+                handlePlayerError({ type: 'play', details: err.message });
+            });
+        }).catch(error => {
+            console.error('Error loading with Shaka:', error);
+            handlePlayerError({ type: 'shaka-load', details: error.message });
+        });
+    }
+
+    function handlePlayerPlaying() {
+        clearTimeout(checkTimeout);
+        hideLoadingIndicator();
+        
+        setTimeout(() => {
+            if (isChecking && !isPaused) {
+                const channel = channels[currentIndex];
+                const result = {
+                    name: channel.name,
+                    url: channel.url,
+                    status: 'success',
+                    time: (Date.now() - startTime) / 1000
+                };
+                results.push(result);
+                
+                addResultItem(result);
+                
+                if (autoplayToggle.checked) {
+                    setTimeout(checkNextChannel, 1000);
+                }
+            }
+        }, 2000);
+    }
+
+    function handlePlayerError(error) {
+        clearTimeout(checkTimeout);
+        hideLoadingIndicator();
+        
+        if (isChecking && !isPaused) {
+            const channel = channels[currentIndex];
+            const result = {
+                name: channel.name,
+                url: channel.url,
+                status: 'error',
+                error: error.type || 'unknown',
+                details: error.details || 'Stream failed to load'
+            };
+            results.push(result);
+            
+            addResultItem(result);
+            
+            setTimeout(checkNextChannel, 500);
+        }
+    }
+
+    function addResultItem(result) {
+        const item = document.createElement('div');
+        item.className = `channel-item status-${result.status}`;
+        item.dataset.status = result.status;
+        
+        const statusIcon = result.status === 'success' 
+            ? `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>`
+            : `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>`;
+        
+        item.innerHTML = `
+            <div class="channel-status">
+                ${statusIcon}
+            </div>
+            <div class="channel-info">
+                <div class="channel-name">${result.name}</div>
+                <div class="channel-url">${result.url}</div>
+            </div>
+            <div class="channel-actions">
+                <button class="action-button play-button" title="Play this channel">▶</button>
+                <button class="action-button copy-button" title="Copy URL">📋</button>
+            </div>
+        `;
+        
+        const playButton = item.querySelector('.play-button');
+        const copyButton = item.querySelector('.copy-button');
+        
+        playButton.addEventListener('click', () => {
+            resetPlayer();
+            currentChannelName.textContent = result.name;
+            playChannel({ name: result.name, url: result.url });
+        });
+        
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(result.url)
+                .then(() => showAlert('URL copied to clipboard!', 'success'))
+                .catch(() => showAlert('Failed to copy URL'));
+        });
+        
+        resultsList.appendChild(item);
+    }
+
+    function resetPlayer() {
+        if (shakaInstance) {
+            shakaInstance.destroy();
+            shakaInstance = null;
+        }
+        
+        videoPlayer.src = '';
+        videoPlayer.load();
+    }
+
+    function showLoadingIndicator() {
+        loadingIndicator.style.visibility = 'visible';
+    }
+
+    function hideLoadingIndicator() {
+        loadingIndicator.style.visibility = 'hidden';
+    }
+
+    function filterResults() {
+        const query = searchInput.value.toLowerCase();
+        const filter = statusFilter.value;
+        
+        const items = resultsList.querySelectorAll('.channel-item');
+        
+        if (items.length === 0) {
+            resultsList.innerHTML = '<p class="no-results">No channels checked yet</p>';
+            return;
+        }
+        
+        let visibleCount = 0;
+        
+        items.forEach(item => {
+            const name = item.querySelector('.channel-name').textContent.toLowerCase();
+            const url = item.querySelector('.channel-url').textContent.toLowerCase();
+            const status = item.dataset.status;
+            
+            const matchesQuery = name.includes(query) || url.includes(query);
+            const matchesFilter = filter === 'all' || 
+                                 (filter === 'working' && status === 'success') || 
+                                 (filter === 'notWorking' && status === 'error');
+            
+            if (matchesQuery && matchesFilter) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        if (visibleCount === 0) {
+            if (!resultsList.querySelector('.no-results-filter')) {
+                const noResults = document.createElement('p');
+                noResults.className = 'no-results no-results-filter';
+                noResults.textContent = 'No channels match your filter';
+                resultsList.appendChild(noResults);
+            }
+        } else {
+            const noResultsMsg = resultsList.querySelector('.no-results-filter');
+            if (noResultsMsg) {
+                noResultsMsg.remove();
+            }
+        }
+    }
+
+    function exportWorkingChannels() {
+        const workingChannels = results.filter(r => r.status === 'success');
+        
+        if (workingChannels.length === 0) {
+            showAlert('No working channels to export');
+            return;
+        }
+        
+        let m3uContent = '#EXTM3U\n';
+        workingChannels.forEach(channel => {
+            m3uContent += `#EXTINF:-1,${channel.name}\n${channel.url}\n`;
+        });
+        
+        downloadFile(m3uContent, 'working_channels.m3u');
+    }
+
+    function exportAllResults() {
+        if (results.length === 0) {
+            showAlert('No results to export');
+            return;
+        }
+        
+        const jsonContent = JSON.stringify(results, null, 2);
+        downloadFile(jsonContent, 'iptv_check_results.json');
+    }
+
+    function downloadFile(content, filename) {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function showAlert(message, type = 'error') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        Object.assign(notification.style, {
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            padding: '12px 20px',
+            borderRadius: '4px',
+            zIndex: 1000,
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            backgroundColor: type === 'success' ? '#d4edda' : '#f8d7da',
+            color: type === 'success' ? '#155724' : '#721c24',
+            borderLeft: type === 'success' ? '4px solid #28a745' : '4px solid #dc3545'
+        });
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
+    }
+});
+    </script>
+</body>
+</html>
